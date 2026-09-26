@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "THE LEAGUE",
+    "slug": "the-league",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "theleague",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0B0B0F",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.projetx.theleague"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0B0B0F",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "app.projetx.theleague"
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/favicon.png",
+      "backgroundColor": "#0B0B0F",
+      "name": "THE LEAGUE \u2014 d\u00e9mo",
+      "shortName": "THE LEAGUE",
+      "themeColor": "#09090B",
+      "description": "D\u00e9mo priv\u00e9e de THE LEAGUE. Toutes les donn\u00e9es sont simul\u00e9es."
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0B0B0F",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
