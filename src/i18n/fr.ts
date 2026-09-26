@@ -1,0 +1,406 @@
+import type { CompetitionKind, DataSourceKind, MomentType } from '@/domain/types';
+
+/**
+ * French copy — the reference locale. Every other locale must have the same shape
+ * (see `i18n/index.ts`). Award names (BROMANCE, MISSING…) are intentionally English
+ * and live in `engine/catalog.ts`, not here.
+ *
+ * Placeholders: `{a}`, `{b}`, `{c}` = featured members (in order), `{names}` = all of them,
+ * anything else = a value from the moment's `vars`.
+ */
+
+export interface MomentCopy {
+  headlines: string[];
+  quips: string[];
+}
+
+const moments: Record<MomentType, MomentCopy> = {
+  BROMANCE: {
+    headlines: [
+      '{a} et {b} ont passé {minutes} ensemble aujourd’hui.',
+      '{minutes} côte à côte. {a} et {b}, encore eux.',
+      '{a} + {b} = {minutes} de vie commune aujourd’hui.',
+    ],
+    quips: [
+      'Get a room.',
+      'Name a more iconic duo.',
+      'Vous deux, encore ?',
+      'À ce stade, emménagez ensemble.',
+      'On attend le faire-part.',
+    ],
+  },
+  MISSING: {
+    headlines: [
+      'Personne n’a croisé {a} aujourd’hui.',
+      'Aucune trace de {a} auprès de la League aujourd’hui.',
+    ],
+    quips: [
+      'Dernière rencontre avec un membre il y a {hours}.',
+      '{hours} sans croiser personne. On lance un avis de recherche ?',
+      'Si vous croisez {a}, dites-lui qu’on l’aime. Ça fait {hours}.',
+    ],
+  },
+  THE_LINK_UP: {
+    headlines: [
+      '{count} membres sur {total} réunis pendant {minutes}.',
+      '{count} sur {total}. Même endroit. {minutes}.',
+    ],
+    quips: [
+      'Le plus gros rassemblement du mois.',
+      'La League en présentiel. Ça arrive.',
+      'Quelqu’un a pensé à faire une photo de groupe ?',
+      'Les absents ont toujours tort.',
+    ],
+  },
+  TROUBLE_IN_PARADISE: {
+    headlines: [
+      '{a} et {b} n’ont passé que {minutes} ensemble aujourd’hui.',
+      '{minutes}. C’est tout ce que {a} et {b} se sont accordé aujourd’hui.',
+    ],
+    quips: [
+      'Contre {usual} d’habitude. Tout va bien ?',
+      'D’habitude c’est {usual}. On ne pose pas de questions.',
+      'Moyenne habituelle : {usual}. Le silence est assourdissant.',
+    ],
+  },
+  WEIRDLY_IN_SYNC: {
+    headlines: [
+      '{a} et {b} ont quitté la maison à {leftDiff} d’écart…',
+      'Départ à {leftDiff} d’écart, retour à {returnDiff} d’écart. {a} et {b}, chacun de son côté.',
+    ],
+    quips: [
+      '…et retour à {returnDiff} d’écart. Sans se croiser.',
+      'Même rythme, vies différentes. Troublant.',
+      'Deux horloges, un seul cerveau.',
+    ],
+  },
+  RECORD_BROKEN: {
+    headlines: [
+      '{a} vient de battre le record du mois : {value} {unit}.',
+      'Nouveau record de la League : {value} {unit} pour {a}.',
+    ],
+    quips: [
+      'Ancien record : {previous}. Rideau.',
+      'Le précédent tenait à {previous}. Plus maintenant.',
+      'Quelqu’un peut lui dire que ce n’est pas une compétition ? Ah si.',
+    ],
+  },
+  PERSONAL_RECORD: {
+    headlines: ['{a} a battu son record perso : {value} {unit}.', 'Record personnel pour {a} : {value} {unit}.'],
+    quips: ['Ancien meilleur : {previous}.', 'Hier encore, c’était impensable.', 'Progrès détecté.'],
+  },
+  TODAYS_BATTLE: {
+    headlines: ['{competition} : {a} remporte la bataille du jour.', '{a} gagne « {competition} ».'],
+    quips: ['{b} termine deuxième, {c} complète le podium.', 'Podium : {a}, {b}, {c}.', 'Les autres, c’était pour la participation.'],
+  },
+  NIGHT_OWL: {
+    headlines: ['{a} : extinction des feux à {time}.', 'Au lit à {time}. {a}, tout va bien ?'],
+    quips: ['Nuit courte, questions longues.', 'Le sommeil, c’est surcoté.', 'On ne juge pas. Un peu quand même.'],
+  },
+  EARLY_BIRD: {
+    headlines: ['{a} était debout à {time}.', 'Réveil de {a} : {time}.'],
+    quips: ['Pourquoi.', 'Une heure avant son habitude. Suspect.', 'Le monde dormait encore.'],
+  },
+  MUSIC_TWINS: {
+    headlines: ['{names} ont écouté {artist} en boucle aujourd’hui.', '{artist} en boucle chez {names}.'],
+    quips: ['Coïncidence ? Probablement pas.', 'Création d’une playlist commune en cours.', 'Même vibe, écouteurs différents.'],
+  },
+  HOMEBODY: {
+    headlines: ['{a} n’a pas quitté la maison aujourd’hui.', 'Journée 100 % intérieure pour {a}.'],
+    quips: ['Le canapé remercie.', 'Mode hibernation activé.', 'Respect, honnêtement.'],
+  },
+  EXPLORER: {
+    headlines: ['{count} lieux différents pour {a} aujourd’hui.', '{count} lieux pour {a}. En une journée.'],
+    quips: ['Tour de France express.', 'Impossible à suivre.', 'Record d’itinérance du jour.'],
+  },
+  PHOTO_DUMP: {
+    headlines: ['{a} a pris {count} photos aujourd’hui.', '{count} photos pour {a}. Juste aujourd’hui.'],
+    quips: ['Le photo dump arrive.', 'Stockage iCloud : en danger.', 'Pour info, ça ne rapporte aucun point.'],
+  },
+  CALENDAR_CHAOS: {
+    headlines: ['{a} avait {count} événements dans son agenda.', '{count} rendez-vous pour {a} aujourd’hui.'],
+    quips: ['Ministre, ou juste désorganisé ?', 'On prend rendez-vous pour le voir ?', 'Agenda de PDG, sans le salaire.'],
+  },
+  SAME_MINUTE: {
+    headlines: ['Réveil à la même minute pour {a} et {b} : {time}.', '{time}. Même réveil pour {a} et {b}.'],
+    quips: ['Sans se parler. Glaçant.', 'Connexion télépathique confirmée.', 'L’univers envoie des signes.'],
+  },
+  GROUP_STAT: {
+    headlines: ['Ensemble, la League a marché {km} aujourd’hui.', 'Total du groupe : {km} à pied aujourd’hui.'],
+    quips: ['Soit {comparison}.', 'L’équivalent de {comparison}.', 'De quoi faire {comparison}.'],
+  },
+  SLEEP_CHAMP: {
+    headlines: ['{a} a dormi {minutes} cette nuit.', 'Nuit de {minutes} pour {a}.'],
+    quips: ['Hibernation.', 'Un bébé ne dort pas autant.', 'Le repos du guerrier. Sans la guerre.'],
+  },
+  STREAK: {
+    headlines: ['{a} gagne la bataille du jour pour la {count}e fois d’affilée.', '{count} victoires de suite pour {a}.'],
+    quips: ['Quelqu’un pour l’arrêter ?', 'Dynastie en construction.', 'Les autres, réveillez-vous.'],
+  },
+};
+
+const competitions: Record<CompetitionKind, { name: string; rule: string; unit: string }> = {
+  steps: { name: 'Le plus de pas', rule: 'Celui qui marche le plus aujourd’hui gagne.', unit: 'pas' },
+  distance: { name: 'Grand fond', rule: 'La plus grande distance à pied ou en courant.', unit: 'km' },
+  beat_your_average: {
+    name: 'Dépasse-toi',
+    rule: 'Le plus gros écart par rapport à TA moyenne des 14 derniers jours. Tout le monde a sa chance.',
+    unit: '%',
+  },
+  together_time: {
+    name: 'Animal social',
+    rule: 'Le plus de temps passé avec d’autres membres (consentement mutuel requis).',
+    unit: 'min',
+  },
+  active_minutes: { name: 'Toujours en mouvement', rule: 'Le plus de minutes actives.', unit: 'min' },
+};
+
+const sources: Record<DataSourceKind, { label: string; detail: string }> = {
+  motion: { label: 'Mouvement', detail: 'Pas, distance, minutes actives.' },
+  sleep: { label: 'Sommeil', detail: 'Heures de coucher et de réveil.' },
+  proximity: {
+    label: 'Temps ensemble',
+    detail: 'Temps passé avec d’autres membres. Consentement mutuel, jamais de position en direct.',
+  },
+  routine: { label: 'Routine', detail: 'Heures de départ et de retour. Calculées sur ton téléphone, jamais de trajet stocké.' },
+  music: { label: 'Musique', detail: 'Artiste le plus écouté (quand l’accès existe).' },
+  photos: { label: 'Photos', detail: 'Nombre de photos uniquement. Jamais les images.' },
+  calendar: { label: 'Agenda', detail: 'Nombre d’événements uniquement. Jamais leur contenu.' },
+  screen: { label: 'Écran', detail: 'Temps d’écran, si Apple le permet un jour.' },
+  transport: { label: 'Transports', detail: 'Minutes en transport, à vélo…' },
+};
+
+export const fr = {
+  locale: 'fr',
+  app: { name: 'THE LEAGUE', tagline: 'Ta vie est le jeu.' },
+  common: {
+    demo: 'DÉMO',
+    simulated: 'Données simulées',
+    simulatedLong: 'Ligue fictive. Toutes les données sont simulées.',
+    close: 'Fermer',
+    cancel: 'Annuler',
+    continue: 'Continuer',
+    loading: 'Chargement…',
+    error: 'Une erreur est survenue.',
+    retry: 'Réessayer',
+    you: 'toi',
+    points: 'pts',
+    seeAll: 'Tout voir',
+    comingSoon: 'Bientôt',
+  },
+  tabs: { today: 'Aujourd’hui', drop: 'Drop', league: 'League', me: 'Moi' },
+  today: {
+    greetingMorning: 'Bonjour',
+    greetingEvening: 'Bonsoir',
+    competitionOfDay: 'Compétition du jour',
+    participants: '{n} membres en lice',
+    dropAt: 'Daily Drop à {time}',
+    dropReady: 'Le Daily Drop est prêt',
+    dropReadySub: '{n} moments à découvrir',
+    dropLocked: 'Le Drop se débloque ce soir',
+    dropLockedSub: '{n} moments en préparation. On ne spoile rien.',
+    watch: 'Regarder',
+    revealNow: 'Révéler maintenant',
+    revealNowHint: 'Mode démo : pas besoin d’attendre ce soir.',
+    nextDay: 'Simuler le jour suivant',
+    nextDayHint: 'Le Moment Engine génère une nouvelle journée fictive.',
+    resetDemo: 'Revenir au début de la démo',
+    teaser: 'Au programme ce soir',
+    leader: 'En tête de la saison',
+    yourRank: 'Ton classement',
+    seasonDay: 'Jour {n} de la saison',
+    noLeague: 'Tu n’as pas encore de League.',
+    createOrJoin: 'Créer ou rejoindre une League',
+    liveEmpty: 'Aucune donnée réelle pour l’instant',
+    liveEmptySub:
+      'La collecte de données arrive dans une prochaine version. En attendant, explore la démo pour voir à quoi ressemblera ta League.',
+    openDemo: 'Explorer la démo',
+  },
+  drop: {
+    title: 'Daily Drop',
+    latest: 'Dernier Drop',
+    history: 'Historique',
+    moments: '{n} moments',
+    more: '+ {n} autres moments',
+    empty: 'Pas encore de Drop.',
+    tapHint: 'Touche à droite pour avancer, à gauche pour revenir',
+    end: 'C’est tout pour aujourd’hui',
+    endSub: 'Rendez-vous demain soir.',
+    replay: 'Revoir',
+    react: 'Réagir',
+    points: '+{n} pts',
+    notEligible: 'non compté',
+    provenance: {
+      verified: 'Vérifié',
+      device: 'Mesuré',
+      inferred: 'Estimé',
+      manual: 'Déclaré',
+      simulated: 'Simulé',
+    },
+    locked: 'Verrouillé jusqu’à {time}',
+  },
+  league: {
+    title: 'League',
+    season: 'Saison',
+    leaderboard: 'Classement',
+    records: 'Records',
+    groupRecords: 'Records du groupe',
+    personalRecords: 'Records perso',
+    awards: 'Awards',
+    members: 'Membres',
+    wins: '{n} victoires',
+    winsOne: '{n} victoire',
+    pastSeasons: 'Saisons passées',
+    recap: 'Récap de saison',
+    champion: 'Champion',
+    iconicDuo: 'Duo iconique',
+    unexpected: 'Moments inattendus',
+    totals: 'En chiffres',
+    daysLeft: '{n} jours restants',
+    invite: 'Code d’invitation',
+    noRecords: 'Aucun record pour l’instant.',
+    fairPlay:
+      'Seules les données fiables rapportent des points. Les valeurs saisies à la main ou incohérentes sont affichées mais pas comptées.',
+  },
+  people: { title: 'Membres', closest: 'Meilleur allié', sources: '{n} sources actives' },
+  profile: {
+    title: 'Profil',
+    seasonRank: 'Rang',
+    titles: 'Titres',
+    awards: 'Awards',
+    records: 'Records',
+    closestTeammate: 'Coéquipier le plus proche',
+    together: '{time} ensemble ce mois-ci',
+    moments: 'Moments marquants',
+    noMoments: 'Aucun moment pour l’instant.',
+    appearances: 'Drops',
+    battleWins: 'Victoires',
+    points: 'Points',
+    you: 'C’est toi',
+    history: 'Historique',
+    settings: 'Réglages',
+  },
+  history: { title: 'Historique', empty: 'Aucun Drop passé.', today: 'Aujourd’hui', yesterday: 'Hier' },
+  settings: {
+    title: 'Réglages',
+    profile: 'Profil',
+    displayName: 'Nom affiché',
+    league: 'League',
+    leagueName: 'Nom',
+    inviteCode: 'Code d’invitation',
+    shareCode: 'Partager le code',
+    leave: 'Quitter la League',
+    mode: 'Mode',
+    demoMode: 'Mode démo',
+    demoModeSub: 'Ligue fictive de 8 membres. Rien n’est réel.',
+    liveMode: 'Ma vraie League',
+    liveModeSub: 'Connexion Supabase requise.',
+    demoAs: 'Voir la démo en tant que',
+    permissions: 'Sources de données',
+    permissionsSub:
+      'Chaque source est désactivée par défaut. Dans cette version, aucune donnée n’est collectée : ces choix préparent la suite.',
+    privacy: 'Confidentialité',
+    pause: 'Mettre le suivi en pause',
+    pauseSub: 'Plus aucune donnée n’est prise en compte tant que la pause est active.',
+    hideSensitive: 'Masquer les moments sensibles',
+    hideSensitiveSub: 'Les moments de sommeil et de routine ne sont montrés qu’à toi.',
+    principles: [
+      'Aucune position en direct n’est jamais montrée aux autres membres.',
+      'Être dans la même zone ne veut pas dire avoir passé du temps ensemble : ces moments sont marqués « Estimé ».',
+      'Le temps passé ensemble exige le consentement des deux personnes.',
+      'Les données sensibles sont traitées sur ton téléphone ; seuls les résultats sont envoyés.',
+    ],
+    account: 'Compte',
+    signOut: 'Se déconnecter',
+    deleteData: 'Supprimer mon compte et mes données',
+    deleteConfirm: 'Cette action est définitive. Continuer ?',
+    signIn: 'Se connecter',
+    notConfigured: 'Supabase n’est pas configuré sur cette version (voir README).',
+    about: 'À propos',
+    aboutText:
+      'THE LEAGUE est un prototype privé. Aucune IA payante : les moments sont générés par un moteur de règles déterministe.',
+    version: 'Version {v}',
+    language: 'Langue',
+  },
+  auth: {
+    title: 'Rejoins ta League',
+    subtitle: 'Crée un compte avec ton e-mail et un mot de passe.',
+    email: 'E-mail',
+    password: 'Mot de passe',
+    displayName: 'Prénom ou surnom',
+    signIn: 'Se connecter',
+    signUp: 'Créer un compte',
+    switchToSignUp: 'Pas encore de compte ? Inscris-toi',
+    switchToSignIn: 'Déjà un compte ? Connecte-toi',
+    checkEmail: 'Compte créé. Vérifie tes e-mails pour confirmer ton adresse, puis connecte-toi.',
+    passwordTooShort: 'Le mot de passe doit faire au moins 8 caractères.',
+    notConfigured: 'Supabase n’est pas encore configuré. Tu peux explorer la démo en attendant.',
+    tryDemo: 'Explorer la démo',
+  },
+  onboarding: {
+    title: 'Ta League',
+    create: 'Créer une League',
+    createSub: 'Tu deviens admin et tu reçois un code à partager.',
+    leagueName: 'Nom de la League',
+    join: 'Rejoindre avec un code',
+    joinSub: 'Demande le code à un ami.',
+    code: 'Code d’invitation',
+    invalidCode: 'Code invalide.',
+    created: 'League créée. Partage ce code à tes amis :',
+  },
+  stats: {
+    together: 'ensemble',
+    steps: 'pas',
+    km: 'distance',
+    previous: 'ancien record',
+    usual: 'd’habitude',
+    today: 'aujourd’hui',
+    leftDiff: 'écart au départ',
+    returnDiff: 'écart au retour',
+    members: 'membres',
+    duration: 'durée',
+    hours: 'sans croiser personne',
+    bedtime: 'coucher',
+    wake: 'réveil',
+    places: 'lieux',
+    photos: 'photos',
+    events: 'événements',
+    sleep: 'sommeil',
+    streak: 'victoires d’affilée',
+    groupKm: 'à pied, tous ensemble',
+    points: 'points',
+  },
+  comparisons: {
+    versailles: 'un Paris → Versailles',
+    marathon: 'un marathon',
+    marathons: '{n} marathons',
+    peripherique: 'un tour du périphérique parisien',
+    peripheriques: '{n} tours du périphérique',
+    channel: 'la traversée de la Manche',
+  },
+  units: { steps: 'pas', km: 'km' },
+  records: {
+    steps_day: 'Le plus de pas en un jour',
+    distance_day: 'La plus longue distance en un jour',
+    duo_day: 'Le plus long moment à deux',
+    gathering: 'Le plus gros rassemblement',
+    latest_bedtime: 'Le coucher le plus tardif',
+    personal_steps: 'Record de pas',
+  },
+  awards: {
+    champion: { title: 'CHAMPION', description: 'Le plus de points cette saison ({value}).' },
+    steps_king: { title: 'ROI DU BITUME', description: 'Le plus de pas cumulés ({value}).' },
+    iconic_duo: { title: 'ICONIC DUO', description: '{value} passées ensemble ce mois-ci.' },
+    ghost: { title: 'GHOST', description: 'Le plus souvent introuvable ({value} fois MISSING).' },
+    night_owl: { title: 'NIGHT OWL', description: 'Coucher moyen le plus tardif ({value}).' },
+    photographer: { title: 'PAPARAZZI', description: '{value} photos prises. Ne rapporte aucun point.' },
+    social_butterfly: { title: 'SOCIAL BUTTERFLY', description: '{value} passées avec d’autres membres.' },
+    homebody: { title: 'CASANIER', description: '{value} journées sans quitter la maison.' },
+    minister: { title: 'MINISTRE', description: '{value} événements dans son agenda.' },
+  },
+  moments,
+  competitions,
+  sources,
+};
+
+export type Dictionary = typeof fr;
