@@ -205,7 +205,15 @@ export function StoryViewer({ drop, snapshot, onReact, onClose }: Props) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.md, gap: space.md },
+  root: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 520, // phone-shaped story on desktop browsers
+    alignSelf: 'center',
+    backgroundColor: colors.bg,
+    paddingHorizontal: space.md,
+    gap: space.md,
+  },
   bars: { flexDirection: 'row', gap: 4 },
   bar: { flex: 1, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.18)', overflow: 'hidden' },
   barFill: { height: 3, backgroundColor: colors.text },

@@ -1,0 +1,7 @@
+# Only THE LEAGUE is deployed. The old Apex Studio prototype must never be uploaded.
+apex-studio.zip
+e2e/
+supabase/
+node_modules/
+dist/
+.expo/

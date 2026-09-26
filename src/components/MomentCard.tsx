@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ComponentProps } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import type { Member, Moment, MomentType } from '@/domain/types';
 import { renderMoment } from '@/engine/render';
@@ -45,6 +45,9 @@ export function MomentCard({ moment, members, size = 'story' }: Props) {
   const r = renderMoment(moment, members);
   const people = moment.memberIds.map((id) => members.find((m) => m.id === id)).filter((m): m is Member => !!m);
   const compact = size === 'compact';
+  // Story cards shrink on short screens (e.g. iPhone Safari with its toolbars).
+  const { height } = useWindowDimensions();
+  const k = compact ? 1 : Math.max(0.6, Math.min(1, (height - 260) / 560));
   const ink = theme.ink;
   const icon = ICONS[moment.type];
   const s = strings();
@@ -67,16 +70,16 @@ export function MomentCard({ moment, members, size = 'story' }: Props) {
         </View>
         <View style={styles.titleRow}>
           {icon ? <Ionicons name={icon} size={compact ? 22 : 30} color={ink} /> : null}
-          <Text style={[styles.title, { color: ink, fontSize: compact ? 30 : 46, lineHeight: compact ? 36 : 54 }]} numberOfLines={2}>
+          <Text style={[styles.title, { color: ink, fontSize: compact ? 30 : Math.round(46 * k), lineHeight: compact ? 36 : Math.round(54 * k) }]} numberOfLines={2}>
             {r.title}
           </Text>
         </View>
       </View>
 
-      {!compact ? <Visual moment={moment} people={people} everyone={members} ink={ink} accent={theme.accent} /> : null}
+      {!compact ? <Visual moment={moment} people={people} everyone={members} ink={ink} accent={theme.accent} k={k} /> : null}
 
       <View style={{ gap: compact ? space.sm : space.md }}>
-        <Text style={[styles.headline, { color: ink, fontSize: compact ? 17 : 24, lineHeight: compact ? 23 : 31 }]}>
+        <Text style={[styles.headline, { color: ink, fontSize: compact ? 17 : Math.round(24 * Math.max(k, 0.8)), lineHeight: compact ? 23 : Math.round(31 * Math.max(k, 0.8)) }]}>
           {r.headline}
         </Text>
         {r.caption ? (
@@ -86,7 +89,7 @@ export function MomentCard({ moment, members, size = 'story' }: Props) {
           <View style={styles.stats}>
             {r.stats.map((st) => (
               <View key={st.label} style={styles.stat}>
-                <Text style={[styles.statValue, { color: ink }]} numberOfLines={1} adjustsFontSizeToFit>
+                <Text style={[styles.statValue, { color: ink, fontSize: Math.round(40 * k), lineHeight: Math.round(46 * k) }]} numberOfLines={1}>
                   {st.value}
                 </Text>
                 <Text style={[styles.statLabel, { color: ink }]}>{st.label.toUpperCase()}</Text>
@@ -101,7 +104,7 @@ export function MomentCard({ moment, members, size = 'story' }: Props) {
             ))}
           </View>
         ) : null}
-        {!compact && moment.type === 'TODAYS_BATTLE' ? (
+        {!compact && k >= 0.85 && moment.type === 'TODAYS_BATTLE' ? (
           <Text style={[styles.note, { color: ink }]}>{s.league.fairPlay}</Text>
         ) : null}
       </View>
@@ -116,16 +119,19 @@ function Visual({
   everyone,
   ink,
   accent,
+  k,
 }: {
   moment: Moment;
   people: Member[];
   everyone: Member[];
   ink: string;
   accent: string;
+  /** Size factor for short screens (0.6–1). */
+  k: number;
 }) {
   const s = strings();
   if (moment.type === 'TODAYS_BATTLE' && moment.results) {
-    const rows = moment.results.slice(0, 5);
+    const rows = moment.results.slice(0, k < 0.85 ? 3 : 5);
     return (
       <View style={styles.podium}>
         {rows.map((r) => {
@@ -157,9 +163,9 @@ function Visual({
     return (
       <View style={styles.visual}>
         <View style={ghost ? styles.ghost : undefined}>
-          <Avatar member={people[0]} size={132} ring={ink} />
+          <Avatar member={people[0]} size={Math.round(132 * k)} ring={ink} />
         </View>
-        <Text style={[styles.bigName, { color: ink }]}>{people[0].displayName.toUpperCase()}</Text>
+        <Text style={[styles.bigName, { color: ink, fontSize: Math.round(34 * k) }]}>{people[0].displayName.toUpperCase()}</Text>
       </View>
     );
   }
@@ -168,9 +174,9 @@ function Visual({
     return (
       <View style={styles.visual}>
         <View style={styles.duo}>
-          <Avatar member={people[0]} size={112} ring={ink} />
+          <Avatar member={people[0]} size={Math.round(112 * k)} ring={ink} />
           <Text style={[styles.glyph, { color: ink }]}>{glyph}</Text>
-          <Avatar member={people[1]} size={112} ring={ink} />
+          <Avatar member={people[1]} size={Math.round(112 * k)} ring={ink} />
         </View>
       </View>
     );
@@ -179,7 +185,7 @@ function Visual({
     <View style={styles.visual}>
       <View style={styles.crowd}>
         {people.map((p) => (
-          <Avatar key={p.id} member={p} size={people.length > 6 ? 54 : 68} ring={ink} />
+          <Avatar key={p.id} member={p} size={Math.round((people.length > 6 ? 54 : 68) * k)} ring={ink} />
         ))}
       </View>
     </View>
@@ -212,13 +218,21 @@ const styles = StyleSheet.create({
   statValue: { fontFamily: fonts.display, fontSize: 40, lineHeight: 46 },
   statLabel: { fontFamily: fonts.bold, fontSize: 11, letterSpacing: 1.2, opacity: 0.8 },
   note: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 16, opacity: 0.7 },
-  visual: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.md, marginVertical: space.lg },
+  visual: {
+    flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.md,
+    marginVertical: space.md,
+  },
   bigName: { fontFamily: fonts.display, fontSize: 34, letterSpacing: 1 },
   ghost: { opacity: 0.45, borderRadius: 80, borderWidth: 2, borderStyle: 'dashed', padding: 6, borderColor: '#fff' },
   duo: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   glyph: { fontFamily: fonts.display, fontSize: 48 },
   crowd: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.sm, maxWidth: 320 },
-  podium: { flex: 1, justifyContent: 'center', gap: space.sm, marginVertical: space.lg },
+  podium: { flex: 1, minHeight: 0, overflow: 'hidden', justifyContent: 'center', gap: space.xs, marginVertical: space.md },
   podiumRow: {
     flexDirection: 'row',
     alignItems: 'center',

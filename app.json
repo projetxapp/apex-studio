@@ -25,7 +25,11 @@
     "web": {
       "output": "single",
       "favicon": "./assets/images/favicon.png",
-      "backgroundColor": "#0B0B0F"
+      "backgroundColor": "#0B0B0F",
+      "name": "THE LEAGUE \u2014 d\u00e9mo",
+      "shortName": "THE LEAGUE",
+      "themeColor": "#09090B",
+      "description": "D\u00e9mo priv\u00e9e de THE LEAGUE. Toutes les donn\u00e9es sont simul\u00e9es."
     },
     "plugins": [
       "expo-router",
